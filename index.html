@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yatzo</title>
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --border: #e5e5ea;
+    --text: #1d1d1f;
+    --text-secondary: #86868b;
+    --accent: #007aff;
+    --accent-hover: #0056b3;
+    --green: #34c759;
+    --red: #ff3b30;
+    --bonus-bg: #f0f7ff;
+    --total-bg: #f5f5f7;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  header {
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 0.5px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 20px 10px;
+  }
+
+  .header-logo {
+    width: 22px;
+    height: 22px;
+  }
+
+  header h1 {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+
+  /* Player tabs in header */
+  .player-tabs {
+    display: none;
+    padding: 8px 12px 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .player-tabs::-webkit-scrollbar { display: none; }
+  .player-tabs.active { display: flex; }
+
+  .player-tabs-inner {
+    display: inline-flex;
+    gap: 2px;
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 3px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .player-tab {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 8px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .player-tab.active {
+    background: var(--card);
+    color: var(--accent);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  /* Setup */
+  .setup {
+    max-width: 480px;
+    margin: 60px auto;
+    padding: 0 20px;
+    text-align: center;
+  }
+
+  .setup h2 {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+
+  .setup p {
+    color: var(--text-secondary);
+    font-size: 17px;
+    margin-bottom: 40px;
+  }
+
+  .player-count {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 32px;
+  }
+
+  .player-count button {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--card);
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text);
+  }
+
+  .player-count button:hover { border-color: var(--accent); color: var(--accent); }
+  .player-count button.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  .player-names {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .player-names input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 17px;
+    background: var(--card);
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: inherit;
+  }
+
+  .player-names input:focus { border-color: var(--accent); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 32px;
+    border-radius: 980px;
+    border: none;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-secondary { background: var(--bg); color: var(--accent); }
+  .btn-secondary:hover { background: #e8e8ed; }
+
+  /* Scorecard - card layout */
+  .scorecard-wrapper {
+    display: none;
+    padding: 0 0 24px;
+    max-width: 540px;
+    margin: 0 auto;
+  }
+
+  .scorecard-wrapper.active { display: block; }
+
+  .player-card {
+    display: none;
+  }
+
+  .player-card.active {
+    display: block;
+  }
+
+  .section-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-secondary);
+    padding: 20px 20px 8px;
+  }
+
+  .score-list {
+    background: var(--card);
+    border-radius: var(--radius);
+    margin: 0 16px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .score-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 0.5px solid var(--border);
+    min-height: 52px;
+  }
+
+  .score-row:last-child { border-bottom: none; }
+
+  .score-row .label {
+    font-size: 16px;
+    font-weight: 400;
+    flex-shrink: 0;
+    min-width: 100px;
+  }
+
+  .score-row .control {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .score-row.computed-row {
+    background: var(--total-bg);
+  }
+
+  .score-row.bonus-row {
+    background: var(--bonus-bg);
+  }
+
+  .score-row.total-row {
+    background: var(--total-bg);
+  }
+
+  .score-row.total-row .label {
+    font-weight: 700;
+    font-size: 17px;
+  }
+
+  .score-row.total-row .computed-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .computed-value {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-secondary);
+  }
+
+  .bonus-achieved { color: var(--green) !important; }
+  .bonus-missed { color: var(--red) !important; }
+
+  /* Total toggle */
+  .total-section { display: none; }
+  .total-section.visible { display: block; }
+
+  .total-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 20px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .total-toggle span {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--accent);
+  }
+
+  .total-toggle .chevron {
+    width: 12px;
+    height: 12px;
+    border-right: 2px solid var(--accent);
+    border-bottom: 2px solid var(--accent);
+    transform: rotate(45deg);
+    transition: transform 0.2s;
+    margin-top: -3px;
+  }
+
+  .total-toggle.open .chevron {
+    transform: rotate(-135deg);
+    margin-top: 3px;
+  }
+
+  /* Segmented control */
+  .seg-control {
+    display: inline-flex;
+    gap: 1px;
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 2px;
+  }
+
+  .seg-control button {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .seg-control button:hover { background: rgba(0,0,0,0.05); }
+
+  .seg-control button.active {
+    background: var(--card);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    font-weight: 600;
+  }
+
+  /* Radio pill */
+  .radio-pill {
+    display: inline-flex;
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+  }
+
+  .radio-pill input[type="radio"] { display: none; }
+
+  .radio-pill label {
+    padding: 7px 18px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-secondary);
+    user-select: none;
+  }
+
+  .radio-pill label:hover { background: rgba(0,0,0,0.04); }
+
+  .radio-pill input[type="radio"]:checked + label.label-stryk {
+    background: var(--card);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    color: var(--red);
+    font-weight: 600;
+  }
+
+  .radio-pill input[type="radio"]:checked + label.label-score {
+    background: var(--card);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    color: var(--green);
+    font-weight: 600;
+  }
+
+  /* Number input */
+  .num-input {
+    width: 64px;
+    padding: 8px 4px;
+    text-align: center;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 17px;
+    font-weight: 500;
+    font-family: inherit;
+    background: var(--card);
+    outline: none;
+    transition: all 0.2s;
+    -moz-appearance: textfield;
+  }
+
+  .num-input::-webkit-outer-spin-button,
+  .num-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .num-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,122,255,0.15);
+  }
+
+  .num-input.filled {
+    background: var(--bg);
+    border-color: transparent;
+  }
+
+  /* Bottom actions */
+  .bottom-actions {
+    text-align: center;
+    margin: 24px 16px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  /* Results overlay */
+  .results-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .results-overlay.active { display: flex; }
+
+  .results-card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 40px 32px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+    animation: slideUp 0.4s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .results-card h2 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 24px;
+  }
+
+  .trophy { font-size: 48px; margin-bottom: 16px; }
+
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border-radius: var(--radius);
+    margin-bottom: 6px;
+  }
+
+  .result-row.winner {
+    background: linear-gradient(135deg, #f0f7ff, #e8f5e9);
+  }
+
+  .result-row .name { font-weight: 600; font-size: 17px; }
+  .result-row .score { font-weight: 700; font-size: 20px; color: var(--accent); }
+  .result-row .rank { font-size: 14px; color: var(--text-secondary); margin-right: 8px; }
+  .result-row.winner .score { color: var(--green); }
+
+  .results-actions {
+    margin-top: 28px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  /* History */
+  .history-section {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 20px 40px;
+  }
+
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .history-header h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .history-clear {
+    border: none;
+    background: none;
+    font-size: 14px;
+    color: var(--red);
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 500;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
+  .history-clear:hover { background: rgba(255,59,48,0.08); }
+
+  .history-list {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .history-item {
+    padding: 14px 16px;
+    border-bottom: 0.5px solid var(--border);
+  }
+
+  .history-item:last-child { border-bottom: none; }
+
+  .history-item-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .history-date {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .history-winner {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--green);
+  }
+
+  .history-players {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .history-player {
+    font-size: 14px;
+    padding: 3px 10px;
+    background: var(--bg);
+    border-radius: 6px;
+    color: var(--text);
+  }
+
+  .history-player.is-winner {
+    background: var(--accent);
+    color: white;
+    font-weight: 600;
+  }
+
+  .history-empty {
+    text-align: center;
+    padding: 24px 16px;
+    color: var(--text-secondary);
+    font-size: 15px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">
+    <svg class="header-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="2" width="20" height="20" rx="4" fill="var(--accent)"/>
+      <circle cx="8" cy="8" r="1.8" fill="white"/>
+      <circle cx="16" cy="8" r="1.8" fill="white"/>
+      <circle cx="12" cy="12" r="1.8" fill="white"/>
+      <circle cx="8" cy="16" r="1.8" fill="white"/>
+      <circle cx="16" cy="16" r="1.8" fill="white"/>
+    </svg>
+    <h1>Yatzo</h1>
+  </div>
+  <div class="player-tabs" id="playerTabs"></div>
+</header>
+
+<!-- Setup -->
+<div class="setup" id="setup">
+  <h2>Nytt spel</h2>
+  <p>Välj antal spelare och ange namn</p>
+  <div class="player-count" id="playerCount"></div>
+  <div class="player-names" id="playerNames"></div>
+  <button class="btn btn-primary" id="startGame">Starta spel</button>
+</div>
+
+<!-- History -->
+<div class="history-section" id="historySection">
+  <div class="history-header">
+    <h3>Tidigare spel</h3>
+    <button class="history-clear" id="clearHistory">Rensa</button>
+  </div>
+  <div class="history-list" id="historyList"></div>
+</div>
+
+<!-- Scorecard -->
+<div class="scorecard-wrapper" id="scorecardWrapper">
+  <div id="playerCards"></div>
+  <div class="bottom-actions">
+    <button class="btn btn-secondary" id="newGameBtn">Nytt spel</button>
+    <button class="btn btn-primary" id="showResultsBtn" style="display:none;">Visa resultat</button>
+  </div>
+</div>
+
+<!-- Results -->
+<div class="results-overlay" id="resultsOverlay">
+  <div class="results-card">
+    <div class="trophy">🏆</div>
+    <h2 id="winnerTitle"></h2>
+    <div id="resultsList"></div>
+    <div class="results-actions">
+      <button class="btn btn-secondary" id="closeResults">Stäng</button>
+      <button class="btn btn-primary" id="restartGame">Nytt spel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const UPPER_CATS = ['ones','twos','threes','fours','fives','sixes'];
+const UPPER_MULTIPLIER = { ones: 1, twos: 2, threes: 3, fours: 4, fives: 5, sixes: 6 };
+
+const CATEGORIES = [
+  { id: 'ones',       label: 'Ettor',         section: 'upper', type: 'count' },
+  { id: 'twos',       label: 'Tvåor',         section: 'upper', type: 'count' },
+  { id: 'threes',     label: 'Treor',         section: 'upper', type: 'count' },
+  { id: 'fours',      label: 'Fyror',         section: 'upper', type: 'count' },
+  { id: 'fives',      label: 'Femmor',        section: 'upper', type: 'count' },
+  { id: 'sixes',      label: 'Sexor',         section: 'upper', type: 'count' },
+  { id: 'upper_sum',  label: 'Summa',         section: 'upper_calc', computed: true },
+  { id: 'bonus',      label: 'Bonus',         section: 'upper_calc', computed: true },
+  { id: 'one_pair',   label: 'Ett par',       section: 'lower', type: 'number', max: 12 },
+  { id: 'two_pairs',  label: 'Två par',       section: 'lower', type: 'number', max: 22 },
+  { id: 'three_kind', label: 'Tretal',        section: 'lower', type: 'number', max: 18 },
+  { id: 'four_kind',  label: 'Fyrtal',        section: 'lower', type: 'number', max: 24 },
+  { id: 'small_str',  label: 'Liten stege',   section: 'lower', type: 'toggle', fixedScore: 15 },
+  { id: 'large_str',  label: 'Stor stege',    section: 'lower', type: 'toggle', fixedScore: 20 },
+  { id: 'full_house', label: 'Kåk',           section: 'lower', type: 'number', max: 28 },
+  { id: 'chance',     label: 'Chans',         section: 'lower', type: 'number', max: 30 },
+  { id: 'yatzy',      label: 'Yatzy',         section: 'lower', type: 'toggle', fixedScore: 50 },
+  { id: 'total',      label: 'Totalt',        section: 'total', computed: true },
+];
+
+let playerCount = 2;
+let players = [];
+let scores = {};
+let activePlayer = 0;
+let resultsShown = false;
+
+function initSetup() {
+  const countDiv = document.getElementById('playerCount');
+  countDiv.innerHTML = '';
+  for (let i = 1; i <= 6; i++) {
+    const btn = document.createElement('button');
+    btn.textContent = i;
+    btn.className = i === playerCount ? 'active' : '';
+    btn.onclick = () => {
+      playerCount = i;
+      countDiv.querySelectorAll('button').forEach((b, idx) => {
+        b.className = idx + 1 === i ? 'active' : '';
+      });
+      renderNameInputs();
+    };
+    countDiv.appendChild(btn);
+  }
+  renderNameInputs();
+  renderHistory();
+}
+
+function renderNameInputs() {
+  const div = document.getElementById('playerNames');
+  div.innerHTML = '';
+  for (let i = 0; i < playerCount; i++) {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = `Spelare ${i + 1}`;
+    input.dataset.index = i;
+    input.value = players[i] || '';
+    div.appendChild(input);
+  }
+}
+
+document.getElementById('startGame').onclick = () => {
+  const inputs = document.querySelectorAll('#playerNames input');
+  players = [];
+  inputs.forEach((inp, i) => {
+    players.push(inp.value.trim() || `Spelare ${i + 1}`);
+  });
+  scores = {};
+  players.forEach(p => { scores[p] = {}; });
+  activePlayer = 0;
+  resultsShown = false;
+  document.getElementById('showResultsBtn').style.display = 'none';
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('historySection').style.display = 'none';
+  document.getElementById('scorecardWrapper').classList.add('active');
+  document.getElementById('playerTabs').classList.add('active');
+  renderTabs();
+  renderAllCards();
+  switchPlayer(0);
+};
+
+function renderTabs() {
+  const tabs = document.getElementById('playerTabs');
+  tabs.innerHTML = '';
+  const inner = document.createElement('div');
+  inner.className = 'player-tabs-inner';
+  players.forEach((p, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'player-tab' + (i === 0 ? ' active' : '');
+    btn.textContent = p;
+    btn.onclick = () => switchPlayer(i);
+    inner.appendChild(btn);
+  });
+  tabs.appendChild(inner);
+}
+
+function switchPlayer(index) {
+  activePlayer = index;
+  document.querySelectorAll('.player-tab').forEach((t, i) => {
+    t.classList.toggle('active', i === index);
+  });
+  document.querySelectorAll('.player-card').forEach((c, i) => {
+    c.classList.toggle('active', i === index);
+  });
+}
+
+function renderAllCards() {
+  const container = document.getElementById('playerCards');
+  container.innerHTML = '';
+
+  players.forEach((p, pIdx) => {
+    const card = document.createElement('div');
+    card.className = 'player-card' + (pIdx === 0 ? ' active' : '');
+    card.dataset.player = p;
+
+    let html = '';
+    let currentSection = '';
+
+    CATEGORIES.forEach(cat => {
+      // Section headers
+      if (cat.section === 'upper' && currentSection !== 'upper') {
+        html += '<div class="section-label">Övre del</div><div class="score-list">';
+        currentSection = 'upper';
+      }
+      if (cat.section === 'upper_calc' && currentSection === 'upper') {
+        // Keep in same list
+      }
+      if (cat.section === 'lower' && currentSection !== 'lower') {
+        html += '</div>';
+        html += '<div class="section-label">Undre del</div><div class="score-list">';
+        currentSection = 'lower';
+      }
+      if (cat.section === 'total' && currentSection !== 'total') {
+        html += '</div>';
+        const totalId = `total_section_${slugify(p)}`;
+        const toggleId = `total_toggle_${slugify(p)}`;
+        html += `<div class="total-toggle" id="${toggleId}"><span>Visa resultat</span><div class="chevron"></div></div>`;
+        html += `<div class="total-section" id="${totalId}"><div class="score-list">`;
+        currentSection = 'total';
+      }
+
+      let rowClass = 'score-row';
+      if (cat.id === 'bonus') rowClass += ' bonus-row';
+      if (cat.id === 'upper_sum') rowClass += ' computed-row';
+      if (cat.id === 'total') rowClass += ' total-row';
+
+      html += `<div class="${rowClass}">`;
+      html += `<span class="label">${cat.label}</span>`;
+      html += '<span class="control">';
+
+      const slug = slugify(p);
+
+      if (cat.computed) {
+        html += `<span class="computed-value" id="comp_${cat.id}_${slug}">–</span>`;
+      } else if (cat.type === 'count') {
+        html += '<div class="seg-control">';
+        for (let n = 0; n <= 5; n++) {
+          html += `<button data-player="${esc(p)}" data-cat="${cat.id}" data-val="${n}">${n}</button>`;
+        }
+        html += '</div>';
+      } else if (cat.type === 'toggle') {
+        const uid = `radio_${cat.id}_${slug}`;
+        html += `<div class="radio-pill">
+          <input type="radio" name="${uid}" id="${uid}_stryk" value="0"
+            data-player="${esc(p)}" data-cat="${cat.id}">
+          <label for="${uid}_stryk" class="label-stryk">Stryk</label>
+          <input type="radio" name="${uid}" id="${uid}_score" value="${cat.fixedScore}"
+            data-player="${esc(p)}" data-cat="${cat.id}">
+          <label for="${uid}_score" class="label-score">${cat.fixedScore}p</label>
+        </div>`;
+      } else {
+        html += `<input type="number" class="num-input" min="0" max="${cat.max}"
+          data-player="${esc(p)}" data-cat="${cat.id}"
+          inputmode="numeric" pattern="[0-9]*">`;
+      }
+
+      html += '</span></div>';
+    });
+
+    html += '</div></div>'; // close score-list + total-section
+    card.innerHTML = html;
+    container.appendChild(card);
+  });
+
+  // Bind events
+  container.querySelectorAll('.seg-control button').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const player = this.dataset.player;
+      const cat = this.dataset.cat;
+      const val = parseInt(this.dataset.val);
+      const parent = this.parentElement;
+      const wasActive = this.classList.contains('active');
+      parent.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      if (wasActive) {
+        delete scores[player][cat];
+      } else {
+        this.classList.add('active');
+        scores[player][cat] = val * UPPER_MULTIPLIER[cat];
+      }
+      updateComputed();
+      checkAllFilled();
+    });
+  });
+
+  container.querySelectorAll('.radio-pill input[type="radio"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+      scores[this.dataset.player][this.dataset.cat] = parseInt(this.value);
+      updateComputed();
+      checkAllFilled();
+    });
+  });
+
+  container.querySelectorAll('.num-input').forEach(inp => {
+    inp.addEventListener('input', function() {
+      const player = this.dataset.player;
+      const cat = this.dataset.cat;
+      const val = this.value.trim();
+      if (val === '') {
+        delete scores[player][cat];
+        this.classList.remove('filled');
+      } else {
+        let num = parseInt(val);
+        if (isNaN(num) || num < 0) num = 0;
+        const max = parseInt(this.max);
+        if (num > max) { num = max; this.value = num; }
+        scores[player][cat] = num;
+        this.classList.add('filled');
+      }
+      updateComputed();
+      checkAllFilled();
+    });
+    inp.addEventListener('focus', function() { this.select(); });
+  });
+
+  // Total toggle handlers
+  players.forEach(p => {
+    const slug = slugify(p);
+    const toggle = document.getElementById(`total_toggle_${slug}`);
+    const section = document.getElementById(`total_section_${slug}`);
+    if (toggle && section) {
+      toggle.addEventListener('click', () => {
+        const isVisible = section.classList.toggle('visible');
+        toggle.classList.toggle('open', isVisible);
+        toggle.querySelector('span').textContent = isVisible ? 'Dölj resultat' : 'Visa resultat';
+      });
+    }
+  });
+}
+
+function updateComputed() {
+  const lowerCats = ['one_pair','two_pairs','three_kind','four_kind','small_str','large_str','full_house','chance','yatzy'];
+
+  players.forEach(p => {
+    const slug = slugify(p);
+    const s = scores[p];
+
+    let upperSum = 0;
+    let upperFilled = 0;
+    UPPER_CATS.forEach(c => {
+      if (s[c] !== undefined) { upperSum += s[c]; upperFilled++; }
+    });
+
+    const sumEl = document.getElementById(`comp_upper_sum_${slug}`);
+    sumEl.textContent = upperFilled > 0 ? upperSum : '–';
+
+    const bonusEl = document.getElementById(`comp_bonus_${slug}`);
+    if (upperFilled === 6) {
+      if (upperSum >= 63) {
+        bonusEl.textContent = '50';
+        bonusEl.className = 'computed-value bonus-achieved';
+      } else {
+        bonusEl.textContent = '0';
+        bonusEl.className = 'computed-value bonus-missed';
+      }
+    } else {
+      const needed = 63 - upperSum;
+      bonusEl.textContent = upperFilled > 0 ? `(${needed} kvar)` : '–';
+      bonusEl.className = 'computed-value';
+    }
+
+    let total = upperSum;
+    if (upperSum >= 63 && upperFilled === 6) total += 50;
+    lowerCats.forEach(c => { if (s[c] !== undefined) total += s[c]; });
+
+    const totalEl = document.getElementById(`comp_total_${slug}`);
+    const anyFilled = upperFilled > 0 || lowerCats.some(c => s[c] !== undefined);
+    totalEl.textContent = anyFilled ? total : '–';
+  });
+}
+
+function checkAllFilled() {
+  const inputCats = CATEGORIES.filter(c => !c.computed).map(c => c.id);
+  const allFilled = players.every(p => inputCats.every(c => scores[p][c] !== undefined));
+
+  const btn = document.getElementById('showResultsBtn');
+  if (allFilled) {
+    btn.style.display = 'inline-flex';
+    if (!resultsShown) {
+      resultsShown = true;
+      setTimeout(showResults, 300);
+    }
+  } else {
+    btn.style.display = 'none';
+    resultsShown = false;
+  }
+}
+
+document.getElementById('showResultsBtn').onclick = showResults;
+
+function showResults() {
+  const lowerCats = ['one_pair','two_pairs','three_kind','four_kind','small_str','large_str','full_house','chance','yatzy'];
+
+  const totals = players.map(p => {
+    const s = scores[p];
+    let upperSum = 0;
+    UPPER_CATS.forEach(c => { upperSum += (s[c] || 0); });
+    let total = upperSum + (upperSum >= 63 ? 50 : 0);
+    lowerCats.forEach(c => { total += (s[c] || 0); });
+    return { name: p, total };
+  });
+
+  totals.sort((a, b) => b.total - a.total);
+  const maxScore = totals[0].total;
+
+  document.getElementById('winnerTitle').textContent =
+    players.length === 1 ? `${totals[0].name}: ${totals[0].total} poäng` :
+    `${totals[0].name} vinner!`;
+
+  const list = document.getElementById('resultsList');
+  list.innerHTML = '';
+  totals.forEach((t, i) => {
+    const row = document.createElement('div');
+    row.className = 'result-row' + (t.total === maxScore ? ' winner' : '');
+    row.innerHTML = `
+      <div><span class="rank">${i + 1}.</span><span class="name">${esc(t.name)}</span></div>
+      <span class="score">${t.total} p</span>
+    `;
+    list.appendChild(row);
+  });
+
+  document.getElementById('resultsOverlay').classList.add('active');
+
+  // Save to history
+  saveGame();
+}
+
+document.getElementById('closeResults').onclick = () => {
+  document.getElementById('resultsOverlay').classList.remove('active');
+};
+
+document.getElementById('restartGame').onclick = resetToSetup;
+document.getElementById('newGameBtn').onclick = resetToSetup;
+
+function resetToSetup() {
+  document.getElementById('resultsOverlay').classList.remove('active');
+  document.getElementById('scorecardWrapper').classList.remove('active');
+  document.getElementById('playerTabs').classList.remove('active');
+  document.getElementById('setup').style.display = 'block';
+  resultsShown = false;
+  initSetup();
+}
+
+// History
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('yatzo_history') || '[]'); }
+  catch { return []; }
+}
+
+function saveGame() {
+  const lowerCats = ['one_pair','two_pairs','three_kind','four_kind','small_str','large_str','full_house','chance','yatzy'];
+  const results = players.map(p => {
+    const s = scores[p];
+    let upperSum = 0;
+    UPPER_CATS.forEach(c => { upperSum += (s[c] || 0); });
+    let total = upperSum + (upperSum >= 63 ? 50 : 0);
+    lowerCats.forEach(c => { total += (s[c] || 0); });
+    return { name: p, total };
+  });
+  results.sort((a, b) => b.total - a.total);
+
+  const game = {
+    date: new Date().toISOString(),
+    results
+  };
+
+  const history = getHistory();
+  history.unshift(game);
+  if (history.length > 50) history.length = 50;
+  localStorage.setItem('yatzo_history', JSON.stringify(history));
+}
+
+function renderHistory() {
+  const history = getHistory();
+  const section = document.getElementById('historySection');
+  const list = document.getElementById('historyList');
+
+  if (history.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  list.innerHTML = '';
+
+  history.forEach(game => {
+    const d = new Date(game.date);
+    const dateStr = d.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' });
+    const timeStr = d.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+    const maxScore = game.results[0].total;
+
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.innerHTML = `
+      <div class="history-item-top">
+        <span class="history-date">${dateStr} ${timeStr}</span>
+        <span class="history-winner">${game.results[0].name} vann</span>
+      </div>
+      <div class="history-players">
+        ${game.results.map(r =>
+          `<span class="history-player${r.total === maxScore ? ' is-winner' : ''}">${esc(r.name)} ${r.total}p</span>`
+        ).join('')}
+      </div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+document.getElementById('clearHistory').onclick = () => {
+  localStorage.removeItem('yatzo_history');
+  renderHistory();
+};
+
+function slugify(str) {
+  return str.replace(/[^a-zA-Z0-9åäöÅÄÖ]/g, '_');
+}
+
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+initSetup();
+</script>
+</body>
+</html>
