@@ -928,10 +928,10 @@ function renderAllCards() {
         </div>`;
       } else {
         html += `<div class="input-stryk-group">
+          <button class="stryk-btn" data-player="${esc(p)}" data-cat="${cat.id}">Stryk</button>
           <input type="number" class="num-input" min="0" max="${cat.max}"
             data-player="${esc(p)}" data-cat="${cat.id}"
             inputmode="numeric" pattern="[0-9]*">
-          <button class="stryk-btn" data-player="${esc(p)}" data-cat="${cat.id}">Stryk</button>
         </div>`;
       }
 
