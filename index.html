@@ -451,6 +451,42 @@
     border-color: transparent;
   }
 
+  /* Input with stryk wrapper */
+  .input-stryk-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .stryk-btn {
+    padding: 7px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .stryk-btn:hover { background: var(--seg-hover); }
+
+  .stryk-btn.active {
+    background: rgba(255,59,48,0.1);
+    border-color: var(--red);
+    color: var(--red);
+    font-weight: 600;
+  }
+
+  .num-input.stroked {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
   /* Bottom actions */
   .bottom-actions {
     text-align: center;
@@ -876,7 +912,7 @@ function renderAllCards() {
       } else if (cat.type === 'count') {
         html += '<div class="seg-control">';
         for (let n = 0; n <= 5; n++) {
-          html += `<button data-player="${esc(p)}" data-cat="${cat.id}" data-val="${n}">${n}</button>`;
+          html += `<button data-player="${esc(p)}" data-cat="${cat.id}" data-val="${n}">${n === 0 ? '–' : n}</button>`;
         }
         html += '</div>';
       } else if (cat.type === 'toggle') {
@@ -890,9 +926,12 @@ function renderAllCards() {
           <label for="${uid}_score" class="label-score">${cat.fixedScore}p</label>
         </div>`;
       } else {
-        html += `<input type="number" class="num-input" min="0" max="${cat.max}"
-          data-player="${esc(p)}" data-cat="${cat.id}"
-          inputmode="numeric" pattern="[0-9]*">`;
+        html += `<div class="input-stryk-group">
+          <input type="number" class="num-input" min="0" max="${cat.max}"
+            data-player="${esc(p)}" data-cat="${cat.id}"
+            inputmode="numeric" pattern="[0-9]*">
+          <button class="stryk-btn" data-player="${esc(p)}" data-cat="${cat.id}">Stryk</button>
+        </div>`;
       }
 
       html += '</span></div>';
@@ -936,6 +975,15 @@ function renderAllCards() {
       const player = this.dataset.player;
       const cat = this.dataset.cat;
       const val = this.value.trim();
+      // If user types a value, deactivate stryk
+      const group = this.closest('.input-stryk-group');
+      if (group) {
+        const strykBtn = group.querySelector('.stryk-btn');
+        if (strykBtn && strykBtn.classList.contains('active')) {
+          strykBtn.classList.remove('active');
+          this.classList.remove('stroked');
+        }
+      }
       if (val === '') {
         delete scores[player][cat];
         this.classList.remove('filled');
@@ -951,6 +999,34 @@ function renderAllCards() {
       checkAllFilled();
     });
     inp.addEventListener('focus', function() { this.select(); });
+  });
+
+  // Stryk buttons for number inputs
+  container.querySelectorAll('.stryk-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const player = this.dataset.player;
+      const cat = this.dataset.cat;
+      const group = this.closest('.input-stryk-group');
+      const inp = group.querySelector('.num-input');
+      const wasActive = this.classList.contains('active');
+
+      if (wasActive) {
+        // Undo stryk
+        this.classList.remove('active');
+        inp.classList.remove('stroked');
+        inp.value = '';
+        delete scores[player][cat];
+        inp.classList.remove('filled');
+      } else {
+        // Activate stryk
+        this.classList.add('active');
+        inp.value = '0';
+        inp.classList.add('stroked', 'filled');
+        scores[player][cat] = 0;
+      }
+      updateComputed();
+      checkAllFilled();
+    });
   });
 
   // Total toggle handlers
