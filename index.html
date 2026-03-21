@@ -488,6 +488,141 @@
     pointer-events: none;
   }
 
+  /* Dice roller */
+  .dice-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 150;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .dice-overlay.active { display: flex; }
+
+  .dice-panel {
+    background: var(--card);
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px 32px;
+    width: 100%;
+    max-width: 540px;
+    box-shadow: var(--shadow-lg);
+    animation: slideUpDice 0.3s ease;
+  }
+
+  @keyframes slideUpDice {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .dice-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .dice-header h3 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+
+  .dice-rolls-left {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .dice-close {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: var(--bg);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: var(--text-secondary);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .dice-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .die {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    background: var(--bg);
+    border: 2.5px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+  }
+
+  .die svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .die svg rect { fill: var(--bg); }
+  .die svg circle { fill: var(--text); }
+
+  .die.held {
+    border-color: var(--accent);
+    background: rgba(0,122,255,0.08);
+  }
+
+  .die.held::after {
+    content: 'Sparad';
+    position: absolute;
+    bottom: -18px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .die.rolling {
+    animation: diceShake 0.4s ease;
+  }
+
+  @keyframes diceShake {
+    0% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(-15deg) scale(0.9); }
+    50% { transform: rotate(15deg) scale(0.9); }
+    75% { transform: rotate(-8deg) scale(0.95); }
+    100% { transform: rotate(0deg) scale(1); }
+  }
+
+  .dice-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  .dice-btn {
+    flex: 1;
+    max-width: 200px;
+  }
+
   /* Bottom actions */
   .bottom-actions {
     text-align: center;
@@ -746,7 +881,24 @@
   <div id="playerCards"></div>
   <div class="bottom-actions">
     <button class="btn btn-secondary" id="newGameBtn">Nytt spel</button>
+    <button class="btn btn-primary" id="rollDiceBtn">🎲 Slå tärningar</button>
     <button class="btn btn-primary" id="showResultsBtn" style="display:none;">Visa resultat</button>
+  </div>
+</div>
+
+<!-- Dice roller -->
+<div class="dice-overlay" id="diceOverlay">
+  <div class="dice-panel">
+    <div class="dice-header">
+      <h3>Slå tärningar</h3>
+      <span class="dice-rolls-left" id="diceRollsLeft"></span>
+      <button class="dice-close" id="diceClose">✕</button>
+    </div>
+    <div class="dice-container" id="diceContainer"></div>
+    <p style="text-align:center;font-size:13px;color:var(--text-secondary);margin-bottom:16px;" id="diceHint">Tryck på en tärning för att spara den</p>
+    <div class="dice-actions">
+      <button class="btn btn-primary dice-btn" id="diceRollBtn">Slå</button>
+    </div>
   </div>
 </div>
 
@@ -1247,6 +1399,89 @@ function esc(str) {
   d.textContent = str;
   return d.innerHTML;
 }
+
+// Dice roller
+(function() {
+  const overlay = document.getElementById('diceOverlay');
+  const container = document.getElementById('diceContainer');
+  const rollBtn = document.getElementById('diceRollBtn');
+  const rollsLeftEl = document.getElementById('diceRollsLeft');
+  const hint = document.getElementById('diceHint');
+
+  let dice = [0, 0, 0, 0, 0];
+  let held = [false, false, false, false, false];
+  let rollsLeft = 3;
+
+  const dieSVGs = {
+    1: `<svg viewBox="0 0 48 48"><rect width="48" height="48" rx="8"/><circle cx="24" cy="24" r="4"/></svg>`,
+    2: `<svg viewBox="0 0 48 48"><rect width="48" height="48" rx="8"/><circle cx="14" cy="14" r="3.5"/><circle cx="34" cy="34" r="3.5"/></svg>`,
+    3: `<svg viewBox="0 0 48 48"><rect width="48" height="48" rx="8"/><circle cx="14" cy="14" r="3.5"/><circle cx="24" cy="24" r="3.5"/><circle cx="34" cy="34" r="3.5"/></svg>`,
+    4: `<svg viewBox="0 0 48 48"><rect width="48" height="48" rx="8"/><circle cx="14" cy="14" r="3.5"/><circle cx="34" cy="14" r="3.5"/><circle cx="14" cy="34" r="3.5"/><circle cx="34" cy="34" r="3.5"/></svg>`,
+    5: `<svg viewBox="0 0 48 48"><rect width="48" height="48" rx="8"/><circle cx="14" cy="14" r="3.5"/><circle cx="34" cy="14" r="3.5"/><circle cx="24" cy="24" r="3.5"/><circle cx="14" cy="34" r="3.5"/><circle cx="34" cy="34" r="3.5"/></svg>`,
+    6: `<svg viewBox="0 0 48 48"><rect width="48" height="48" rx="8"/><circle cx="14" cy="12" r="3.5"/><circle cx="34" cy="12" r="3.5"/><circle cx="14" cy="24" r="3.5"/><circle cx="34" cy="24" r="3.5"/><circle cx="14" cy="36" r="3.5"/><circle cx="34" cy="36" r="3.5"/></svg>`,
+  };
+
+  function renderDice() {
+    container.innerHTML = '';
+    dice.forEach((val, i) => {
+      const div = document.createElement('div');
+      div.className = 'die' + (held[i] ? ' held' : '');
+      if (val > 0) {
+        div.innerHTML = dieSVGs[val];
+      } else {
+        div.innerHTML = `<svg viewBox="0 0 48 48"><rect width="48" height="48" rx="8"/></svg>`;
+      }
+      div.addEventListener('click', () => {
+        if (val > 0 && rollsLeft < 3) {
+          held[i] = !held[i];
+          renderDice();
+        }
+      });
+      container.appendChild(div);
+    });
+    rollsLeftEl.textContent = rollsLeft > 0 ? `${rollsLeft} slag kvar` : 'Inga slag kvar';
+    rollBtn.disabled = rollsLeft <= 0;
+    rollBtn.style.opacity = rollsLeft <= 0 ? '0.4' : '1';
+    hint.style.display = (rollsLeft === 3 || rollsLeft <= 0) ? 'none' : 'block';
+  }
+
+  function rollDice() {
+    if (rollsLeft <= 0) return;
+    rollsLeft--;
+    dice.forEach((val, i) => {
+      if (!held[i]) {
+        dice[i] = Math.floor(Math.random() * 6) + 1;
+      }
+    });
+    // Animate unheld dice
+    renderDice();
+    container.querySelectorAll('.die').forEach((el, i) => {
+      if (!held[i]) el.classList.add('rolling');
+    });
+    setTimeout(() => {
+      container.querySelectorAll('.die.rolling').forEach(el => el.classList.remove('rolling'));
+    }, 400);
+  }
+
+  function openDice() {
+    dice = [0, 0, 0, 0, 0];
+    held = [false, false, false, false, false];
+    rollsLeft = 3;
+    renderDice();
+    overlay.classList.add('active');
+  }
+
+  function closeDice() {
+    overlay.classList.remove('active');
+  }
+
+  document.getElementById('rollDiceBtn').addEventListener('click', openDice);
+  rollBtn.addEventListener('click', rollDice);
+  document.getElementById('diceClose').addEventListener('click', closeDice);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeDice();
+  });
+})();
 
 // Theme toggle
 (function() {
