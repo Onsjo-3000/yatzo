@@ -390,41 +390,33 @@
     font-weight: 700;
   }
 
-  /* Radio pill */
-  .radio-pill {
-    display: inline-flex;
-    background: var(--bg);
-    border-radius: 8px;
-    padding: 2px;
-    gap: 2px;
+  /* Toggle group (stryk / score) */
+  .toggle-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
-  .radio-pill input[type="radio"] { display: none; }
-
-  .radio-pill label {
-    padding: 7px 18px;
-    border-radius: 6px;
-    font-size: 15px;
+  .score-btn {
+    padding: 7px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    font-size: 13px;
     font-weight: 500;
     font-family: inherit;
+    color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.2s;
-    color: var(--text-secondary);
-    user-select: none;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .radio-pill label:hover { background: var(--pill-hover); }
+  .score-btn:hover { background: var(--seg-hover); }
 
-  .radio-pill input[type="radio"]:checked + label.label-stryk {
-    background: var(--card);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    color: var(--red);
-    font-weight: 600;
-  }
-
-  .radio-pill input[type="radio"]:checked + label.label-score {
-    background: var(--card);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  .score-btn.active {
+    background: rgba(52,199,89,0.1);
+    border-color: var(--green);
     color: var(--green);
     font-weight: 600;
   }
@@ -1106,14 +1098,9 @@ function renderAllCards() {
         }
         html += '</div>';
       } else if (cat.type === 'toggle') {
-        const uid = `radio_${cat.id}_${slug}`;
-        html += `<div class="radio-pill">
-          <input type="radio" name="${uid}" id="${uid}_stryk" value="0"
-            data-player="${esc(p)}" data-cat="${cat.id}">
-          <label for="${uid}_stryk" class="label-stryk">Stryk</label>
-          <input type="radio" name="${uid}" id="${uid}_score" value="${cat.fixedScore}"
-            data-player="${esc(p)}" data-cat="${cat.id}">
-          <label for="${uid}_score" class="label-score">${cat.fixedScore}p</label>
+        html += `<div class="toggle-group">
+          <button class="stryk-btn" data-player="${esc(p)}" data-cat="${cat.id}" data-val="0">Stryk</button>
+          <button class="score-btn" data-player="${esc(p)}" data-cat="${cat.id}" data-val="${cat.fixedScore}">${cat.fixedScore}p</button>
         </div>`;
       } else {
         html += `<div class="input-stryk-group">
@@ -1152,9 +1139,23 @@ function renderAllCards() {
     });
   });
 
-  container.querySelectorAll('.radio-pill input[type="radio"]').forEach(radio => {
-    radio.addEventListener('change', function() {
-      scores[this.dataset.player][this.dataset.cat] = parseInt(this.value);
+  container.querySelectorAll('.toggle-group button').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const player = this.dataset.player;
+      const cat = this.dataset.cat;
+      const val = parseInt(this.dataset.val);
+      const group = this.closest('.toggle-group');
+      const wasActive = this.classList.contains('active');
+
+      // Deactivate both buttons
+      group.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+
+      if (wasActive) {
+        delete scores[player][cat];
+      } else {
+        this.classList.add('active');
+        scores[player][cat] = val;
+      }
       updateComputed();
       checkAllFilled();
     });
