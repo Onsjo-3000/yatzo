@@ -659,11 +659,17 @@
   }
 
   /* Dark mode toggle */
-  .theme-toggle {
+  .header-actions {
     position: absolute;
-    right: 16px;
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .header-btn {
     width: 32px;
     height: 32px;
     border: none;
@@ -678,19 +684,22 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  .theme-toggle:hover { background: var(--border); }
+  .header-btn:hover { background: var(--border); }
 
-  .theme-toggle svg {
+  .header-btn svg {
     width: 18px;
     height: 18px;
     fill: var(--text-secondary);
     transition: fill 0.2s;
   }
 
-  .theme-toggle .icon-moon { display: block; }
-  .theme-toggle .icon-sun { display: none; }
-  [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
-  [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+  .header-btn .icon-moon { display: block; }
+  .header-btn .icon-sun { display: none; }
+  [data-theme="dark"] .header-btn .icon-moon { display: none; }
+  [data-theme="dark"] .header-btn .icon-sun { display: block; }
+
+  .wake-btn.active { background: rgba(255,149,0,0.15); }
+  .wake-btn.active svg { fill: #ff9500; }
 </style>
 </head>
 <body>
@@ -706,10 +715,15 @@
       <circle cx="16" cy="16" r="1.8" fill="white"/>
     </svg>
     <h1>Yatzo</h1>
-    <button class="theme-toggle" id="themeToggle" aria-label="Byt tema">
-      <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21.64 13a1 1 0 00-1.05-.14 8.05 8.05 0 01-3.37.73A8.15 8.15 0 019.08 5.49a8.59 8.59 0 01.25-2 1 1 0 00-1.28-1.2A10 10 0 1021.64 13z"/></svg>
-      <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="21" x2="12" y2="23" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"/><line x1="1" y1="12" x2="3" y2="12" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"/><line x1="21" y1="12" x2="23" y2="12" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"/></svg>
-    </button>
+    <div class="header-actions">
+      <button class="header-btn wake-btn" id="wakeToggle" aria-label="Håll skärmen vaken">
+        <svg viewBox="0 0 24 24"><path d="M12 3a1 1 0 011 1v1a1 1 0 01-2 0V4a1 1 0 011-1zm0 15a1 1 0 011 1v1a1 1 0 01-2 0v-1a1 1 0 011-1zm9-9a1 1 0 010 2h-1a1 1 0 010-2h1zM5 11a1 1 0 010 2H4a1 1 0 010-2h1zm14.07-6.07a1 1 0 010 1.41l-.71.71a1 1 0 01-1.41-1.41l.71-.71a1 1 0 011.41 0zM7.05 16.95a1 1 0 010 1.41l-.71.71a1 1 0 01-1.41-1.41l.71-.71a1 1 0 011.41 0zm11.9 0l.71.71a1 1 0 01-1.41 1.41l-.71-.71a1 1 0 011.41-1.41zM5.64 5.64l.71.71A1 1 0 014.93 7.76l-.71-.71a1 1 0 011.41-1.41zM12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+      </button>
+      <button class="header-btn" id="themeToggle" aria-label="Byt tema">
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21.64 13a1 1 0 00-1.05-.14 8.05 8.05 0 01-3.37.73A8.15 8.15 0 019.08 5.49a8.59 8.59 0 01.25-2 1 1 0 00-1.28-1.2A10 10 0 1021.64 13z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="21" x2="12" y2="23" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"/><line x1="1" y1="12" x2="3" y2="12" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"/><line x1="21" y1="12" x2="23" y2="12" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
   </div>
   <div class="player-tabs" id="playerTabs"></div>
 </header>
@@ -1254,6 +1268,49 @@ function esc(str) {
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem('yatzo_theme', next);
   });
+})();
+
+// Wake Lock
+(function() {
+  let wakeLock = null;
+  const btn = document.getElementById('wakeToggle');
+
+  async function requestWake() {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      btn.classList.add('active');
+      wakeLock.addEventListener('release', () => {
+        btn.classList.remove('active');
+        wakeLock = null;
+      });
+    } catch (e) {
+      console.log('Wake Lock ej tillgängligt:', e);
+    }
+  }
+
+  async function releaseWake() {
+    if (wakeLock) {
+      await wakeLock.release();
+      wakeLock = null;
+      btn.classList.remove('active');
+    }
+  }
+
+  btn.addEventListener('click', () => {
+    if (wakeLock) { releaseWake(); }
+    else { requestWake(); }
+  });
+
+  // Re-acquire on visibility change if active
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && btn.classList.contains('active') && !wakeLock) {
+      requestWake();
+    }
+  });
+
+  if (!('wakeLock' in navigator)) {
+    btn.style.display = 'none';
+  }
 })();
 
 initSetup();
