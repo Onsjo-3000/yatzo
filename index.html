@@ -129,9 +129,10 @@
 
   .player-tab.active {
     background: var(--card);
-    color: var(--accent);
+    color: var(--player-color, var(--accent));
     font-weight: 600;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-bottom: 2.5px solid var(--player-color, var(--accent));
   }
 
   /* Setup */
@@ -235,6 +236,11 @@
 
   .player-card {
     display: none;
+    border-top: 3px solid var(--player-color, var(--accent));
+    margin: 0 16px;
+    border-radius: var(--radius);
+    padding-top: 4px;
+    background: var(--player-tint, transparent);
   }
 
   .player-card.active {
@@ -253,9 +259,14 @@
   .score-list {
     background: var(--card);
     border-radius: var(--radius);
-    margin: 0 16px;
+    margin: 0;
     box-shadow: var(--shadow);
     overflow: hidden;
+  }
+
+  .section-label + .score-list,
+  .total-section .score-list {
+    margin: 0;
   }
 
   .score-row {
@@ -916,6 +927,19 @@
 </div>
 
 <script>
+const PLAYER_COLORS = [
+  { color: '#007aff', tint: 'rgba(0,122,255,0.04)', tintDark: 'rgba(0,122,255,0.08)' },
+  { color: '#ff9500', tint: 'rgba(255,149,0,0.04)', tintDark: 'rgba(255,149,0,0.08)' },
+  { color: '#34c759', tint: 'rgba(52,199,89,0.04)', tintDark: 'rgba(52,199,89,0.08)' },
+  { color: '#af52de', tint: 'rgba(175,82,222,0.04)', tintDark: 'rgba(175,82,222,0.08)' },
+  { color: '#ff2d55', tint: 'rgba(255,45,85,0.04)', tintDark: 'rgba(255,45,85,0.08)' },
+  { color: '#5ac8fa', tint: 'rgba(90,200,250,0.04)', tintDark: 'rgba(90,200,250,0.08)' },
+];
+
+function isDarkMode() {
+  return document.documentElement.getAttribute('data-theme') === 'dark';
+}
+
 const UPPER_CATS = ['ones','twos','threes','fours','fives','sixes'];
 const UPPER_MULTIPLIER = { ones: 1, twos: 2, threes: 3, fours: 4, fives: 5, sixes: 6 };
 
@@ -1008,6 +1032,7 @@ function renderTabs() {
     const btn = document.createElement('button');
     btn.className = 'player-tab' + (i === 0 ? ' active' : '');
     btn.textContent = p;
+    btn.style.setProperty('--player-color', PLAYER_COLORS[i % PLAYER_COLORS.length].color);
     btn.onclick = () => switchPlayer(i);
     inner.appendChild(btn);
   });
@@ -1032,6 +1057,9 @@ function renderAllCards() {
     const card = document.createElement('div');
     card.className = 'player-card' + (pIdx === 0 ? ' active' : '');
     card.dataset.player = p;
+    const pc = PLAYER_COLORS[pIdx % PLAYER_COLORS.length];
+    card.style.setProperty('--player-color', pc.color);
+    card.style.setProperty('--player-tint', isDarkMode() ? pc.tintDark : pc.tint);
 
     let html = '';
     let currentSection = '';
@@ -1492,11 +1520,19 @@ function esc(str) {
     document.documentElement.setAttribute('data-theme', 'dark');
   }
 
+  function updateCardTints() {
+    document.querySelectorAll('.player-card').forEach((card, i) => {
+      const pc = PLAYER_COLORS[i % PLAYER_COLORS.length];
+      card.style.setProperty('--player-tint', isDarkMode() ? pc.tintDark : pc.tint);
+    });
+  }
+
   document.getElementById('themeToggle').addEventListener('click', () => {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const next = isDark ? 'light' : 'dark';
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const next = dark ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem('yatzo_theme', next);
+    updateCardTints();
   });
 })();
 
