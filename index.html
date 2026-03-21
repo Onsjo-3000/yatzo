@@ -500,6 +500,59 @@
     font-weight: 600;
   }
 
+  /* Yatzy celebration */
+  .confetti-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 999;
+    overflow: hidden;
+  }
+
+  .confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    animation: confettiFall 2s ease-out forwards;
+  }
+
+  @keyframes confettiFall {
+    0% {
+      transform: translateY(-20px) rotate(0deg) scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100vh) rotate(720deg) scale(0.5);
+      opacity: 0;
+    }
+  }
+
+  .yatzy-flash {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    font-size: 64px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    color: var(--accent);
+    z-index: 998;
+    pointer-events: none;
+    animation: yatzyPop 1.2s ease-out forwards;
+    text-shadow: 0 4px 20px rgba(0,122,255,0.3);
+  }
+
+  @keyframes yatzyPop {
+    0% { transform: translate(-50%, -50%) scale(0) rotate(-10deg); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(1.2) rotate(3deg); opacity: 1; }
+    50% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(0.8) rotate(0deg); opacity: 0; }
+  }
+
   .num-input.stroked {
     opacity: 0.3;
     pointer-events: none;
@@ -1170,6 +1223,10 @@ function renderAllCards() {
       } else {
         this.classList.add('active');
         scores[player][cat] = val;
+        // Celebrate yatzy!
+        if (cat === 'yatzy' && val === 50) {
+          celebrateYatzy();
+        }
       }
       updateComputed();
       checkAllFilled();
@@ -1441,6 +1498,42 @@ function esc(str) {
   const d = document.createElement('div');
   d.textContent = str;
   return d.innerHTML;
+}
+
+// Yatzy celebration
+function celebrateYatzy() {
+  // Confetti
+  const container = document.createElement('div');
+  container.className = 'confetti-container';
+  document.body.appendChild(container);
+
+  const colors = ['#007aff','#ff9500','#34c759','#af52de','#ff2d55','#5ac8fa','#ffcc00','#ff3b30'];
+  for (let i = 0; i < 60; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti';
+    piece.style.left = Math.random() * 100 + '%';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDelay = Math.random() * 0.6 + 's';
+    piece.style.animationDuration = (1.5 + Math.random()) + 's';
+    piece.style.width = (6 + Math.random() * 8) + 'px';
+    piece.style.height = (6 + Math.random() * 8) + 'px';
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    container.appendChild(piece);
+  }
+
+  // Text pop
+  const text = document.createElement('div');
+  text.className = 'yatzy-flash';
+  text.textContent = 'YATZY! 🎉';
+  document.body.appendChild(text);
+
+  // Vibrate if available
+  if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
+  setTimeout(() => {
+    container.remove();
+    text.remove();
+  }, 2500);
 }
 
 // Dice roller
